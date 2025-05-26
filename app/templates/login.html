@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ورود به سیستم</title>
+</head>
+<body>
+    <h2>ورود</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }} {# یا به صورت دستی فیلدها را رندر کنید #}
+        <button type="submit">ورود</button>
+    </form>
+
+    {% if form.errors %}
+        <p style="color: red;">نام کاربری یا رمز عبور اشتباه است.</p>
+    {% endif %}
+</body>
+</html>

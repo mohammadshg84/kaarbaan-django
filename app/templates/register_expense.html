@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ثبت هزینه جدید</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="{% static 'admin/css/base.css' %}" rel="stylesheet">
+    <link href="{% static 'admin/css/widgets.css' %}" rel="stylesheet">
+    <link href="{% static 'admin/css/rtl.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'admin/jquery.ui.datepicker.jalali/themes/base/jquery-ui.min.css' %}">
+
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #f8f9fa; padding: 20px; }
+        .container { background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); max-width: 600px; }
+        .form-group label { text-align: right; display: block; }
+        .form-control { text-align: right; direction: rtl; }
+        .errorlist { color: red; list-style-type: none; padding: 0; margin: 0; text-align: right; }
+        input[type="text"].vDateField { text-align: center; direction: ltr; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="mb-4 text-center">ثبت هزینه جدید برای وظیفه: **{{ task.title }}** (پروژه: {{ task.project.name }})</h2>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="submit_expense" value="true">
+
+            {{ form.task }} {# این فیلد مخفیه و مقدارش از initial پر میشه #}
+
+            <div class="form-group">
+                <label for="{{ form.amount.id_for_label }}">مبلغ:</label>
+                {{ form.amount }}
+                {% if form.amount.errors %}<ul class="errorlist">{% for error in form.amount.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.expense_date.id_for_label }}">تاریخ هزینه:</label>
+                {{ form.expense_date }}
+                {% if form.expense_date.errors %}<ul class="errorlist">{% for error in form.expense_date.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}">شرح هزینه:</label>
+                {{ form.description }}
+                {% if form.description.errors %}<ul class="errorlist">{% for error in form.description.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-success btn-lg btn-block mt-4">ثبت هزینه</button>
+            <a href="{% url 'work_report_list' %}" class="btn btn-outline-secondary btn-block mt-2">بازگشت</a>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script src="{% static 'admin/js/core.js' %}"></script>
+    <script src="{% static 'admin/js/vendor/jquery/jquery.init.js' %}"></script>
+    <script src="{% static 'admin/js/admin/RelatedObjectLookups.js' %}"></script>
+    <script src="{% static 'admin/js/calendar.js' %}"></script>
+    <script src="{% static 'admin/js/admin/DateTimeShortcuts.js' %}"></script>
+    <script src="{% static 'jalali_date/js/jalali-datepicker.min.js' %}"></script>
+
+    {{ form.media }}
+
+</body>
+</html>

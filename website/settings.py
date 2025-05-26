@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     "app.apps.appConfig",
     'ckeditor',
     'ckeditor_uploader',
-    'django_jalali',
+    'jalali_date',
 ]
 
 MIDDLEWARE = [
@@ -157,4 +157,23 @@ CKEDITOR_CONFIGS = {
         'font_names': 'VazirMatn/VazirMatn;Arial/Arial, Helvetica, sans-serif;Times New Roman/Times New Roman, Times, serif;',
         'contentsCss': '/static/css/custom.css',
     },
+    'awesome_ckeditor': { # این کانفیگ جدید است که باید اضافه شود
+            'toolbar': 'Custom',
+            'toolbar_Custom': [
+                ['Bold', 'Italic', 'Underline', '-', 'RemoveFormat'],
+                ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
+                ['Link', 'Unlink'],
+                ['TextColor', 'BGColor'],
+                ['Source'], # برای دیدن کد HTML
+            ],
+            'width': '100%',
+            'height': 150, # ارتفاع کمتر برای فیلد پیام چت
+            'removePlugins': 'elementspath', # این خط، مسیرهای HTML رو در پایین ادیتور حذف میکنه
+            'resize_enabled': False, # غیرفعال کردن تغییر اندازه دستی
+            'language': 'fa', # زبان فارسی
+            'contentsLangDirection': 'rtl', # جهت راست به چپ
+    }
 }
+
+LOGIN_REDIRECT_URL = '/dashboard/' # آدرسی که پس از لاگین موفق کاربر به آن هدایت می شود
+LOGIN_URL = '/app/login/'     # آدرس صفحه لاگین شما

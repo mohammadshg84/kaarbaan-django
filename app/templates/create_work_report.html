@@ -1,0 +1,333 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ثبت گزارش جدید / پروژه جدید / وظیفه جدید</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="{% static 'ckeditor/ckeditor/ckeditor.js' %}"></script>
+    <script src="{% static 'ckeditor/ckeditor-init.js' %}"></script>
+
+    <link href="{% static 'admin/css/base.css' %}" rel="stylesheet">
+    <link href="{% static 'admin/css/widgets.css' %}" rel="stylesheet">
+    <link href="{% static 'admin/css/rtl.css' %}" rel="stylesheet"> {# Assuming you have admin RTL CSS #}
+    <link rel="stylesheet" href="{% static 'admin/jquery.ui.datepicker.jalali/themes/base/jquery-ui.min.css' %}">
+
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .form-section {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
+        .form-row {
+            margin-bottom: 15px;
+        }
+        .time-span-item {
+            border: 1px dashed #ced4da;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .errorlist {
+            color: red;
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            text-align: right; /* Ensure error messages are right-aligned */
+        }
+        .tab-content > .tab-pane {
+            padding-top: 20px; /* Space from tabs */
+        }
+        /* Ensure labels are right-aligned */
+        .form-group label {
+            text-align: right;
+            display: block; /* Make label a block element to control text-align */
+        }
+        .form-control {
+            text-align: right; /* Align text in input fields to the right */
+            direction: rtl; /* Ensure text direction is right-to-left */
+        }
+        .btn-block {
+            direction: rtl; /* Ensure button text direction is right-to-left */
+        }
+        /* Specific adjustments for date/time inputs if needed */
+        /* AdminJalaliDateWidget generates inputs with specific IDs/classes,
+            so these might need adjustment based on its actual output. */
+        input[type="text"].vDateField { /* Class used by Django Admin date widgets */
+            text-align: center; /* Dates/times often look better centered */
+            direction: ltr; /* Keep LTR for date/time input format if it's standard */
+        }
+        .admin-datetime-widget { /* Container for AdminSplitJalaliDateTime */
+            display: flex;
+            justify-content: flex-end; /* Align date/time inputs to the right */
+            gap: 5px;
+        }
+        .admin-datetime-widget input {
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="mb-4 text-center">ثبت اطلاعات جدید</h2>
+
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="report-tab" data-toggle="tab" href="#report" role="tab" aria-controls="report" aria-selected="true">ثبت گزارش کار</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="project-tab" data-toggle="tab" href="#project" role="tab" aria-controls="project" aria-selected="false">ثبت پروژه جدید</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="task-tab" data-toggle="tab" href="#task" role="tab" aria-controls="task" aria-selected="false">ثبت وظیفه جدید</a>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="report" role="tabpanel" aria-labelledby="report-tab">
+                <div class="form-section">
+                    <h4 class="mb-3 text-center">ثبت گزارش کار جدید</h4>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="submit_report" value="true">
+
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="{{ report_form.task.id_for_label }}">وظیفه:</label>
+                                {{ report_form.task }}
+                                {% if report_form.task.errors %}<ul class="errorlist">{% for error in report_form.task.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="{{ report_form.report_date.id_for_label }}">تاریخ گزارش:</label>
+                                {{ report_form.report_date }}
+                                {% if report_form.report_date.errors %}<ul class="errorlist">{% for error in report_form.report_date.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ report_form.description.id_for_label }}">شرح فعالیت:</label>
+                            {{ report_form.description }}
+                            {% if report_form.description.errors %}<ul class="errorlist">{% for error in report_form.description.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                        </div>
+
+                        <h5 class="mt-4 mb-3">بازه‌های زمانی کار:</h5>
+                        {{ time_span_formset.management_form }}
+                        <div id="time-span-formset-container">
+                            {% for form in time_span_formset %}
+                                <div class="time-span-item" {% if form.instance.pk %}data-id="{{ form.instance.pk }}"{% endif %}>
+                                    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label for="{{ form.start_time.id_for_label }}">ساعت شروع:</label>
+                                            {{ form.start_time }}
+                                            {% if form.start_time.errors %}<ul class="errorlist">{% for error in form.start_time.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label for="{{ form.end_time.id_for_label }}">ساعت پایان:</label>
+                                            {{ form.end_time }}
+                                            {% if form.end_time.errors %}<ul class="errorlist">{% for error in form.end_time.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                                        </div>
+                                        {# Removed notes field #}
+                                    </div>
+                                    {% if form.instance.pk %}{{ form.DELETE }}{{ form.DELETE.label }}{% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" id="add-time-span" class="btn btn-secondary btn-sm mt-3">افزودن بازه زمانی دیگر</button>
+                        <hr>
+                        <button type="submit" class="btn btn-primary btn-lg btn-block mt-4">ثبت گزارش کار</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="project" role="tabpanel" aria-labelledby="project-tab">
+                <div class="form-section">
+                    <h4 class="mb-3 text-center">ثبت پروژه جدید</h4>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="submit_new_project" value="true">
+
+                        {% for field in project_form %}
+                            <div class="form-group">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}:</label>
+                                {{ field }}
+                                {% if field.errors %}<ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <button type="submit" class="btn btn-success btn-lg btn-block mt-4">ثبت پروژه</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="task" role="tabpanel" aria-labelledby="task-tab">
+                <div class="form-section">
+                    <h4 class="mb-3 text-center">ثبت وظیفه جدید</h4>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="submit_new_task" value="true">
+
+                        <div class="form-group">
+                            <label for="{{ task_form.project.id_for_label }}">پروژه مرتبط:</label>
+                            {{ task_form.project }}
+                            {% if task_form.project.errors %}<ul class="errorlist">{% for error in task_form.project.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ task_form.title.id_for_label }}">عنوان وظیفه:</label>
+                            {{ task_form.title }}
+                            {% if task_form.title.errors %}<ul class="errorlist">{% for error in task_form.title.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ task_form.description.id_for_label }}">توضیحات وظیفه:</label>
+                            {{ task_form.description }}
+                            {% if task_form.description.errors %}<ul class="errorlist">{% for error in task_form.description.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ task_form.parent_task.id_for_label }}">وظیفه والد (اختیاری):</label>
+                            {{ task_form.parent_task }}
+                            {% if task_form.parent_task.errors %}<ul class="errorlist">{% for error in task_form.parent_task.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                        </div>
+
+                        {% if request.user.is_superuser %}
+                        <div class="form-group">
+                            <label for="{{ task_form.assigned_to.id_for_label }}">اختصاص یافته به:</label>
+                            {{ task_form.assigned_to }}
+                            {% if task_form.assigned_to.errors %}<ul class="errorlist">{% for error in task_form.assigned_to.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                        </div>
+                        {% else %}
+                            {{ task_form.assigned_to.as_hidden }} {# Render as hidden input for non-admin users #}
+                        {% endif %}
+
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="{{ task_form.deadline.id_for_label }}">مهلت انجام وظیفه:</label>
+                                {{ task_form.deadline }}
+                                {% if task_form.deadline.errors %}<ul class="errorlist">{% for error in task_form.deadline.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="{{ task_form.status.id_for_label }}">وضعیت:</label>
+                                {{ task_form.status }}
+                                {% if task_form.status.errors %}<ul class="errorlist">{% for error in task_form.status.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-info btn-lg btn-block mt-4">ثبت وظیفه</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script src="{% static 'admin/js/core.js' %}"></script>
+    <script src="{% static 'admin/js/vendor/jquery/jquery.init.js' %}"></script> {# This is usually required early #}
+    <script src="{% static 'admin/js/admin/RelatedObjectLookups.js' %}"></script>
+    <script src="{% static 'admin/js/calendar.js' %}"></script>
+    <script src="{% static 'admin/js/admin/DateTimeShortcuts.js' %}"></script>
+
+    <script src="{% static 'jalali_date/js/jalali-datepicker.min.js' %}"></script>
+    {{ report_form.media }}
+    {{ project_form.media }}
+    {{ task_form.media }}
+
+
+    <script>
+        $(document).ready(function() {
+            console.log("jQuery is ready.");
+            // No custom datepicker initialization needed for AdminJalaliDateWidget.
+            // It automatically initializes based on Django Admin's JS and form.media.
+
+            // Logic for dynamically adding forms for WorkTimeSpan
+            // Ensure the generated IDs are correct for formsets.
+            $('#add-time-span').click(function() {
+                var form_idx = $('#id_time_spans-TOTAL_FORMS').val();
+                var new_form_html = `
+                    <div class="time-span-item">
+                        <input type="hidden" name="time_spans-${form_idx}-id" id="id_time_spans-${form_idx}-id">
+                        <input type="hidden" name="time_spans-${form_idx}-work_report" id="id_time_spans-${form_idx}-work_report">
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="id_time_spans-${form_idx}-start_time">ساعت شروع:</label>
+                                <input type="time" name="time_spans-${form_idx}-start_time" id="id_time_spans-${form_idx}-start_time" class="form-control">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="id_time_spans-${form_idx}-end_time">ساعت پایان:</label>
+                                <input type="time" name="time_spans-${form_idx}-end_time" id="id_time_spans-${form_idx}-end_time" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group form-check">
+                            <input type="checkbox" name="time_spans-${form_idx}-DELETE" id="id_time_spans-${form_idx}-DELETE" class="form-check-input">
+                            <label class="form-check-label" for="id_time_spans-${form_idx}-DELETE">حذف</label>
+                        </div>
+                    </div>
+                `;
+                $('#time-span-formset-container').append(new_form_html);
+                $('#id_time_spans-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+                // Re-initialize date/time widgets if they were dynamically added.
+                // For 'time' fields, you might not need special initialization, as HTML5 type="time" handles it.
+                // If you were adding a new JalaliDateField dynamically, you'd need to re-run the Django admin's init:
+                // window.removeEventListener('load', DateTimeShortcuts.init); // Prevent re-running init multiple times on window load
+                // DateTimeShortcuts.init(); // Manually re-initialize for newly added fields
+            });
+
+            // Logic for changing parent task based on selected project in task form
+            $('#id_project').change(function() {
+                var projectId = $(this).val();
+                var parentTaskSelect = $('#id_parent_task');
+
+                if (projectId) {
+                    $.ajax({
+                        url: "{% url 'load_parent_tasks' %}", // This URL must be defined in urls.py
+                        data: {
+                            'project_id': projectId
+                        },
+                        success: function(data) {
+                            parentTaskSelect.empty();
+                            parentTaskSelect.append('<option value="">--- انتخاب وظیفه والد ---</option>');
+                            $.each(data, function(key, value) {
+                                parentTaskSelect.append('<option value="' + value.id + '">' + value.title + '</option>');
+                            });
+                        }
+                    });
+                } else {
+                    parentTaskSelect.empty();
+                    parentTaskSelect.append('<option value="">--- ابتدا یک پروژه را انتخاب کنید ---</option>');
+                }
+            });
+
+            // If a project was pre-selected when the page loaded (e.g., after a form error)
+            // ensure the correct parent tasks are loaded.
+            if ($('#id_project').val()) {
+                $('#id_project').trigger('change');
+            }
+
+            // For CKEditor: Ensure initialization after content load
+            // This part might require more specific settings for your CKEditor.
+            // Generally, CKEditor initializes automatically on fields present when the page loads.
+            // If fields are added dynamically, CKEditor needs to be re-initialized.
+            // In this example, only existing fields on the page are initialized.
+        });
+    </script>
+</body>
+</html>

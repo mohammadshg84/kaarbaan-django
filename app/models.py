@@ -74,13 +74,17 @@ class Task(models.Model):
 
 
 # 4. مدل گزارش کار (WorkReport)
+# your_app_name/models.py (فقط بخش تغییرات یا مدل جدید)
+
+# ... (مدل‌های قبلی شما، از جمله WorkReport، بدون تغییر در فیلدهای start_time و end_time)
+
+# 4. مدل گزارش کار (WorkReport)
 class WorkReport(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="work_reports", verbose_name="وظیفه")
     reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reported_work", verbose_name="گزارش دهنده")
     report_date = models.DateField(verbose_name="تاریخ گزارش")
     description = RichTextUploadingField(verbose_name="شرح فعالیت") # CKEditor
-    start_time = models.TimeField(null=True, blank=True, verbose_name="ساعت شروع")
-    end_time = models.TimeField(null=True, blank=True, verbose_name="ساعت پایان")
+    # start_time و end_time از اینجا حذف می‌شوند تا توسط WorkTimeSpan مدیریت شوند
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ و زمان ثبت گزارش")
 
     def __str__(self):
@@ -90,6 +94,22 @@ class WorkReport(models.Model):
         verbose_name = "گزارش کار"
         verbose_name_plural = "گزارش‌های کار"
         ordering = ['-report_date', '-created_at']
+
+
+# یک مدل جدید برای نگهداری بازه های زمانی متعدد
+class WorkTimeSpan(models.Model):
+    work_report = models.ForeignKey(WorkReport, on_delete=models.CASCADE, related_name="time_spans", verbose_name="گزارش کار")
+    start_time = models.TimeField(verbose_name="ساعت شروع")
+    end_time = models.TimeField(verbose_name="ساعت پایان")
+    notes = models.TextField(blank=True, verbose_name="توضیحات بازه") # توضیحات اختیاری برای این بازه خاص
+
+    def __str__(self):
+        return f"{self.start_time} تا {self.end_time} برای گزارش {self.work_report.id}"
+
+    class Meta:
+        verbose_name = "بازه زمانی کار"
+        verbose_name_plural = "بازه‌های زمانی کار"
+        ordering = ['start_time'] # مرتب سازی بازه ها بر اساس ساعت شروع
 
 
 # 5. مدل فایل پیوست (WorkReportAttachment)
