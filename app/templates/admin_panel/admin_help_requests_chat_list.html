@@ -1,0 +1,47 @@
+{% extends 'base.html' %} {# فرض بر این است که یک base.html دارید #}
+{% load static %}
+
+{% block title %}پنل مدیریت - درخواست‌های کمک{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">لیست درخواست‌های کمک (پنل مدیریت)</h2>
+
+    <div class="mb-3">
+        <a href="{% url 'admin_help_requests_chat_list' %}" class="btn {% if not status_filter %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">همه</a>
+        <a href="{% url 'admin_help_requests_chat_list' %}?status=unresolved" class="btn {% if status_filter == 'unresolved' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">حل نشده</a>
+        <a href="{% url 'admin_help_requests_chat_list' %}?status=resolved" class="btn {% if status_filter == 'resolved' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">حل شده</a>
+    </div>
+
+    {% if help_requests %}
+        <div class="list-group">
+            {% for hr in help_requests %}
+            <a href="{% url 'admin_help_request_chat_detail' hr.id %}" class="list-group-item list-group-item-action mb-2 shadow-sm {% if not hr.is_resolved %}list-group-item-warning{% endif %}">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ hr.requester.username }} - وظیفه: {{ hr.task.title }}</h5>
+                    <small>
+                        {% if hr.last_message_time %}
+                            آخرین فعالیت: {{ hr.last_message_time|date:"Y-m-d H:i" }}
+                        {% else %}
+                            تاریخ درخواست: {{ hr.requested_at|date:"Y-m-d H:i" }}
+                        {% endif %}
+                    </small>
+                </div>
+                <p class="mb-1 text-truncate">{{ hr.problem_description|striptags|truncatechars:150 }}</p>
+                <small>
+                    {% if hr.is_resolved %}
+                        <span class="badge bg-success text-white">حل شده</span>
+                    {% else %}
+                        <span class="badge bg-danger text-white">در انتظار پاسخ</span>
+                    {% endif %}
+                </small>
+            </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            درخواست کمکی برای نمایش وجود ندارد.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

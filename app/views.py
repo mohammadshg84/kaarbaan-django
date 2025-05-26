@@ -491,3 +491,165 @@ def admin_report_view(request):
         'avg_hours_per_report': total_hours_float / reports.count() if reports.count() > 0 else 0, # میانگین ساعت کار در هر گزارش
     }
     return render(request, 'admin_report_view.html', context) # نام تمپلیت را به app/templates/your_app_name/admin_report_view.html تغییر دادم
+
+
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import When,Subquery, Case, F, OuterRef # اصلاح: ایمپورت مستقیم Subquery, Case, F و OuterRef
+from django.utils import timezone # برای استفاده از timezone.now() و توابع زمان
+from django.urls import reverse # این خط را اضافه کنید
+
+# حتماً مدل‌های زیر را از models.py خود import کنید:
+from .models import HelpRequest, HelpRequestMessage, Task, Notification
+# و فرم مربوطه را از forms.py:
+from .forms import HelpRequestMessageForm
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Subquery, Case, F, OuterRef, When, DateTimeField # اصلاح: اضافه کردن DateTimeField
+from django.urls import reverse
+from django.utils import timezone # این برای timezone.now() لازم است، نه DateTimeField
+
+
+# حتماً مدل‌های زیر را از models.py خود import کنید:
+from .models import HelpRequest, HelpRequestMessage, Task, Notification
+# و فرم مربوطه را از forms.py:
+from .forms import HelpRequestMessageForm
+
+# یک تابع کمکی برای بررسی اینکه کاربر مدیر است
+def is_manager(user):
+    # این تابع را با منطق واقعی گروه های کاربری خود جایگزین کنید.
+    # به عنوان مثال، اگر کاربر is_staff باشد یا عضو گروه "مدیران" باشد.
+    if user.is_authenticated: # اطمینان حاصل کنید که کاربر لاگین کرده است
+        return user.is_staff or user.groups.filter(name='مدیران').exists()
+    return False # اگر کاربر لاگین نکرده، مدیر نیست
+
+
+
+@login_required
+@user_passes_test(is_manager) # اطمینان از اینکه فقط مدیران به این صفحه دسترسی دارند
+def admin_help_requests_chat_list(request):
+    """
+    نمایش لیست درخواست‌های کمک برای مدیران، مرتب شده بر اساس آخرین فعالیت.
+    امکان فیلتر کردن بر اساس وضعیت (حل شده / حل نشده) نیز وجود دارد.
+    """
+    help_requests = HelpRequest.objects.annotate(
+        last_message_time=Subquery( # استفاده از Subquery ایمپورت شده
+            HelpRequestMessage.objects.filter(help_request=OuterRef('pk')) # استفاده از OuterRef ایمپورت شده
+            .order_by('-sent_at')
+            .values('sent_at')[:1]
+        )
+    ).order_by(
+        Case( # استفاده از Case ایمپورت شده
+            When(last_message_time__isnull=True, then=F('requested_at')), # استفاده از F ایمپورت شده
+            default=F('last_message_time'), # استفاده از F ایمپورت شده
+            output_field=DateTimeField() # اصلاح: استفاده از DateTimeField ایمپورت شده (بدون timezone.)
+        )
+    ).reverse() # برای نمایش جدیدترین ها ابتدا
+
+    # فیلتر کردن بر اساس وضعیت
+    status_filter = request.GET.get('status')
+    if status_filter == 'resolved':
+        help_requests = help_requests.filter(is_resolved=True)
+    elif status_filter == 'unresolved':
+        help_requests = help_requests.filter(is_resolved=False)
+
+    return render(request, 'admin_panel/admin_help_requests_chat_list.html', {
+        'help_requests': help_requests,
+        'status_filter': status_filter
+    })
+
+# ... (ادامه توابع admin_help_request_chat_detail, mark_help_request_resolved, mark_help_request_unresolved که قبلا صحیح بودند)
+@login_required
+@user_passes_test(is_manager)
+def admin_help_request_chat_detail(request, help_request_id):
+    """
+    نمایش جزئیات یک درخواست کمک و پیام‌های چت آن.
+    مدیر می‌تواند به درخواست پاسخ دهد و وضعیت آن را تغییر دهد.
+    """
+    help_request = get_object_or_404(HelpRequest, id=help_request_id)
+    messages = help_request.messages.all().order_by('sent_at')
+
+    if request.method == 'POST':
+        form = HelpRequestMessageForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.help_request = help_request
+            message.sender = request.user # مدیر پاسخ دهنده است
+            message.save()
+
+            # اگر مدیری به یک درخواست "حل شده" پاسخ دهد، وضعیت آن به "حل نشده" تغییر کند
+            if help_request.is_resolved:
+                help_request.is_resolved = False
+                help_request.resolved_by = None
+                help_request.resolved_at = None
+                help_request.save()
+
+            # ایجاد یک اعلان برای درخواست‌کننده اصلی
+            Notification.objects.create(
+                recipient=help_request.requester,
+                message=f"پاسخی به درخواست کمک شما در وظیفه '{help_request.task.title}' داده شد.",
+                link=reverse('help_request_chat', args=[help_request.id]),
+                notification_type='new_help_request' # می‌توانید نوع اعلان جدیدی برای پاسخ ایجاد کنید
+            )
+
+            return redirect('admin_help_request_chat_detail', help_request_id=help_request.id)
+    else:
+        form = HelpRequestMessageForm()
+
+    return render(request, 'admin_panel/admin_help_request_chat_detail.html', {
+        'help_request': help_request,
+        'messages': messages,
+        'form': form
+    })
+
+@login_required
+@user_passes_test(is_manager)
+def mark_help_request_resolved(request, help_request_id):
+    """
+    یک درخواست کمک را به عنوان 'حل شده' علامت‌گذاری می‌کند.
+    """
+    help_request = get_object_or_404(HelpRequest, id=help_request_id)
+    if request.method == 'POST':
+        help_request.is_resolved = True
+        help_request.resolved_by = request.user
+        help_request.resolved_at = timezone.now()
+        help_request.save()
+
+        # ایجاد اعلان برای درخواست‌کننده که مشکلش حل شده است
+        Notification.objects.create(
+            recipient=help_request.requester,
+            message=f"درخواست کمک شما در وظیفه '{help_request.task.title}' حل شد.",
+            link=reverse('help_request_chat', args=[help_request.id]),
+            notification_type='help_request_resolved'
+        )
+
+        return redirect('admin_help_requests_chat_list')
+    return redirect('admin_help_request_chat_detail', help_request_id=help_request.id)
+
+@login_required
+@user_passes_test(is_manager)
+def mark_help_request_unresolved(request, help_request_id):
+    """
+    یک درخواست کمک را به عنوان 'حل نشده' (باز کردن مجدد) علامت‌گذاری می‌کند.
+    """
+    help_request = get_object_or_404(HelpRequest, id=help_request_id)
+    if request.method == 'POST':
+        help_request.is_resolved = False
+        help_request.resolved_by = None
+        help_request.resolved_at = None
+        help_request.save()
+
+        # ایجاد اعلان برای درخواست‌کننده در صورت نیاز
+        Notification.objects.create(
+            recipient=help_request.requester,
+            message=f"درخواست کمک شما در وظیفه '{help_request.task.title}' به وضعیت 'در حال بررسی' تغییر یافت.",
+            link=reverse('help_request_chat', args=[help_request.id]),
+            notification_type='help_request_unresolved'
+        )
+
+        return redirect('admin_help_requests_chat_list')
+    return redirect('admin_help_request_chat_detail', help_request_id=help_request.id)

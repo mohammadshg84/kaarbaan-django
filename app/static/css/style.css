@@ -1,0 +1,110 @@
+/* static/css/style.css */
+
+/* تنظیمات کلی برای راست به چپ */
+body {
+    direction: rtl;
+    text-align: right;
+    font-family: 'Vazirmatn', 'Arial', sans-serif; /* فونت دلخواه خود را اینجا اضافه کنید */
+    background-color: #f8f9fa; /* رنگ پس‌زمینه روشن */
+}
+
+/* استایل‌های ناوبار */
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+.navbar .nav-link {
+    color: rgba(255, 255, 255, 0.85); /* رنگ لینک‌ها در ناوبار */
+    padding-left: 0.8rem;
+    padding-right: 0.8rem;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
+    color: #fff;
+}
+
+.navbar .dropdown-menu {
+    text-align: right; /* تراز کردن منوی آبشاری به راست */
+}
+
+/* استایل کانتینر اصلی */
+main.container {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+/* استایل کارت‌ها (اگر از کارت در صفحات دیگر استفاده می‌کنید) */
+.card {
+    border-radius: 0.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* استایل فرم‌ها */
+.form-control {
+    border-radius: 0.3rem;
+}
+
+.btn {
+    border-radius: 0.3rem;
+}
+
+/* استایل‌های خاص برای لیست چت */
+.chat-box {
+    background-color: #e9ecef; /* رنگ پس‌زمینه چت باکس */
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 15px;
+    height: 500px; /* ارتفاع ثابت برای چت باکس */
+    overflow-y: auto; /* اسکرول عمودی */
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-box .card {
+    max-width: 80%; /* عرض حداکثر پیام‌ها */
+    margin-bottom: 10px;
+    box-shadow: none; /* حذف سایه از کارت‌های پیام */
+}
+
+/* پیام‌های فرستنده (کاربر درخواست‌کننده) */
+.chat-box .card.bg-light {
+    align-self: flex-start; /* تراز به راست برای RTL */
+    background-color: #e2f0fb !important; /* رنگ آبی روشن‌تر */
+    border-color: #cce5ff !important;
+}
+
+/* پیام‌های گیرنده (مدیر) */
+.chat-box .card.bg-info {
+    align-self: flex-end; /* تراز به چپ برای RTL */
+    background-color: #d1ecf1 !important; /* رنگ سبز/فیروزه‌ای روشن‌تر */
+    border-color: #bee5eb !important;
+    color: #0c5460 !important; /* رنگ متن برای پیام‌های مدیر */
+}
+
+.chat-box .card small {
+    display: block; /* تاریخ و زمان در خط جدید */
+    margin-bottom: 5px;
+    color: #6c757d;
+}
+
+/* استایل دکمه‌های وضعیت (حل شده/حل نشده) */
+.badge {
+    font-size: 0.85em;
+    padding: 0.4em 0.6em;
+}
+
+/* فیلترها در لیست درخواست کمک */
+.btn-group-sm .btn {
+    margin-left: 5px; /* فاصله بین دکمه‌های فیلتر */
+}
+
+/* در صورت نیاز به تغییر فونت */
+/* @font-face {
+    font-family: 'Vazirmatn';
+    src: url('../fonts/Vazirmatn-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+} */

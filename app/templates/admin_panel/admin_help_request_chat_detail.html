@@ -1,0 +1,70 @@
+{% extends 'base.html' %} {# فرض بر این است که یک base.html دارید #}
+{% load static %}
+
+{% block title %}پنل مدیریت - چت درخواست کمک{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <a href="{% url 'admin_help_requests_chat_list' %}" class="btn btn-secondary btn-sm mb-3">بازگشت به لیست درخواست‌ها</a>
+    <h2 class="mb-3">چت درخواست کمک برای وظیفه: "{{ help_request.task.title }}"</h2>
+    <p>درخواست کننده: <strong>{{ help_request.requester.username }}</strong></p>
+    <p>وضعیت:
+        {% if help_request.is_resolved %}
+            <span class="badge bg-success text-white">حل شده توسط {{ help_request.resolved_by.username }} در {{ help_request.resolved_at|date:"Y-m-d H:i" }}</span>
+            <form action="{% url 'mark_help_request_unresolved' help_request.id %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-warning btn-sm ms-2">باز کردن مجدد</button>
+            </form>
+        {% else %}
+            <span class="badge bg-danger text-white">در انتظار پاسخ</span>
+            <form action="{% url 'mark_help_request_resolved' help_request.id %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success btn-sm ms-2">علامت‌گذاری به عنوان حل شده</button>
+            </form>
+        {% endif %}
+    </p>
+
+    <hr>
+
+    <div class="chat-box" style="height: 500px; overflow-y: scroll; border: 1px solid #ddd; padding: 15px; background-color: #f9f9f9; border-radius: 5px;">
+        {% for message in messages %}
+            <div class="card mb-2 {% if message.sender == help_request.requester %}bg-light{% else %}bg-info text-white{% endif %}">
+                <div class="card-body">
+                    <small class="text-muted"><strong>{{ message.sender.username }}</strong> در {{ message.sent_at|date:"Y-m-d H:i" }}</small>
+                    <p class="card-text">
+                        {% if message.message %}
+                            {{ message.message|safe }} {# Safe برای محتوای CKEditor #}
+                        {% else %}
+                            <span class="text-muted fst-italic">پیامی وجود ندارد.</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        {% empty %}
+            <div class="alert alert-info">
+                هنوز هیچ پیامی در این گفتگو وجود ندارد.
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-4">
+        <h3>ارسال پاسخ:</h3>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.media }} {# برای CKEditor #}
+            {{ form.message }} {# فیلد پیام CKEditor #}
+            <button type="submit" class="btn btn-primary mt-3">ارسال پاسخ</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // اسکرول به پایین چت باکس هنگام بارگذاری صفحه
+    document.addEventListener('DOMContentLoaded', function() {
+        var chatBox = document.querySelector('.chat-box');
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
+</script>
+{% endblock %}

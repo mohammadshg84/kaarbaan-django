@@ -1,0 +1,88 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"> {# جهت‌دهی راست به چپ برای زبان فارسی #}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}سیستم مدیریت پروژه و گزارش کار{% endblock %}</title>
+
+    {# Bootstrap CSS CDN #}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {# Optional: Bootstrap Icons (برای آیکون‌ها) #}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    {# Custom CSS #}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    {# این بلاک برای CKEditor و سایر CSSهای خاص صفحه است #}
+    {% block extra_css %}
+    {% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'work_report_list' %}">سامانه مدیریت پروژه</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'work_report_list' %}">گزارش کارهای من</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'create_new_report' %}">ثبت گزارش جدید</a>
+                        </li>
+                        {# نکته: لینک 'درخواست کمک' (submit_help_request) نیاز به task_id دارد. #}
+                        {# بنابراین، نمی‌توان آن را مستقیماً در منوی اصلی قرار داد مگر اینکه یک صفحه واسط برای انتخاب وظیفه داشته باشید. #}
+                        {# فعلاً به صورت یک لینک placeholder نمایش داده شده است. #}
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">درخواست کمک (نیاز به وظیفه)</a>
+                        </li>
+
+                        {# بخش مربوط به مدیران (فقط در صورتی نمایش داده می‌شود که کاربر مدیر باشد) #}
+                        {% if is_manager_context %} {# استفاده از متغیر is_manager_context که از context processor می‌آید #}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    پنل مدیریت
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                    <li><a class="dropdown-item" href="{% url 'admin_report_view' %}">مشاهده گزارشات (مدیر)</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'admin_help_requests_chat_list' %}">مدیریت درخواست‌های کمک (مدیر)</a></li>
+                                </ul>
+                            </li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                خوش آمدید، {{ user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="{% url 'logout' %}">خروج</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">ورود</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mt-4">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    {# Bootstrap Bundle with Popper #}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {# این بلاک برای CKEditor و سایر JSهای خاص صفحه است #}
+    {% block extra_js %}
+    {% endblock %}
+</body>
+</html>

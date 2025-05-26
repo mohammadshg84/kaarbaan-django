@@ -367,3 +367,22 @@ class WorkReportFilterForm(forms.Form):
         # در غیر این صورت، این بخش را مستقیماً از مدل‌ها پر کنید:
         self.fields['project'].choices = [('', 'انتخاب پروژه...')] + [(p.id, p.name) for p in Project.objects.all().order_by('name')]
         self.fields['task'].choices = [('', 'انتخاب وظیفه...')] + [(t.id, f"{t.title} (پروژه: {t.project.name})") for t in Task.objects.all().order_by('title')]
+
+
+
+
+from django import forms
+from .models import HelpRequestMessage # مطمئن شوید که HelpRequestMessage را وارد کرده‌اید
+
+# ... (سایر فرم‌های شما)
+
+class HelpRequestMessageForm(forms.ModelForm):
+    class Meta:
+        model = HelpRequestMessage
+        fields = ['message']
+        labels = {
+            'message': 'پاسخ شما',
+        }
+        widgets = {
+            'message': forms.Textarea(attrs={'rows': 3, 'placeholder': 'پیام خود را اینجا بنویسید...'}),
+        }

@@ -23,4 +23,9 @@ urlpatterns = [
     path('reports/new/', views.create_new_report, name='create_new_report'),
     path('ajax/load_tasks/', views.load_tasks, name='load_tasks'), # برای فیلتر وظایف در فرم گزارش
     path('ajax/load_parent_tasks/', views.load_parent_tasks, name='load_parent_tasks'), # برای فیلتر وظایف والد در فرم وظیفه
+
+path('adm/help_requests/', views.admin_help_requests_chat_list, name='admin_help_requests_chat_list'),
+    path('adm/help_requests/<int:help_request_id>/', views.admin_help_request_chat_detail, name='admin_help_request_chat_detail'),
+    path('adm/help_requests/<int:help_request_id>/resolve/', views.mark_help_request_resolved, name='mark_help_request_resolved'),
+    path('adm/help_requests/<int:help_request_id>/unresolve/', views.mark_help_request_unresolved, name='mark_help_request_unresolved'),
 ]
