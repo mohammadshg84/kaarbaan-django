@@ -302,3 +302,4 @@ class HelpRequestMessage(models.Model):
         verbose_name = "پیام درخواست کمک"
         verbose_name_plural = "پیام‌های درخواست‌های کمک"
         ordering = ['sent_at'] # مرتب سازی بر اساس زمان برای نمایش چت
+
