@@ -214,8 +214,7 @@
                             {{ task_form.assigned_to }}
                             {% if task_form.assigned_to.errors %}<ul class="errorlist">{% for error in task_form.assigned_to.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
                         </div>
-                        {% else %}
-                            {{ task_form.assigned_to.as_hidden }} {# Render as hidden input for non-admin users #}
+
                         {% endif %}
 
                         <div class="form-row">
