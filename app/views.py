@@ -159,9 +159,15 @@ def create_new_report(request):
                 task = task_form.save(commit=False)
                 task.created_by = request.user
                 task.save()
-                task_form.save_m2m() # برای assigned_to
+                if request.user.is_superuser:
+                    task_form.save_m2m()  # این کار 'assigned_to' که توسط ادمین انتخاب شده را ذخیره می‌کند
+                else:
+                    # اگر کاربر معمولی بود، تسک را به خودش اختصاص بده
+                    task.assigned_to.add(request.user)
+
+                    # messages.success(request, f'وظیفه "{task.title}" با موفقیت ثبت شد.')
+                return redirect('create_new_report')
                 # messages.success(request, f'وظیفه "{task.title}" با موفقیت ثبت شد.')
-                return redirect('create_new_report') # رفرش صفحه برای استفاده از وظیفه جدید
             else:
                 # messages.error(request, 'خطا در ثبت وظیفه جدید. لطفا اطلاعات را بررسی کنید.')
                 pass
