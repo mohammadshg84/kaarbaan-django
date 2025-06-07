@@ -23,8 +23,10 @@ class UserGroup(models.Model):
 class Project(models.Model):
     STATUS_CHOICES = (('pending', 'در حال انجام'), ('completed', 'انجام شده'), ('finished', 'تمام شده'))
     name = models.CharField(max_length=200, verbose_name="نام پروژه")
+
     description = RichTextUploadingField(blank=True, verbose_name="توضیحات پروژه")
     deadline = models.DateField(verbose_name="مهلت انجام پروژه", null=True, blank=True)  # تغییر: اختیاری شد
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="وضعیت")
     assigned_to_groups = models.ManyToManyField(UserGroup, blank=True, related_name="projects",
                                                 verbose_name="اختصاص به گروه‌ها")
