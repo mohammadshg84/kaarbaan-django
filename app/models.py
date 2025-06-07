@@ -1,12 +1,16 @@
 from django.db import models
 from django.contrib.auth.models import User
 from ckeditor_uploader.fields import RichTextUploadingField # برای CKEditor
+from django.db import models
+from django.contrib.auth.models import User
+from ckeditor_uploader.fields import RichTextUploadingField
 
-# 1. مدل گروه کاربران (UserGroup)
+
 class UserGroup(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="نام گروه")
     description = models.TextField(blank=True, verbose_name="توضیحات گروه")
-    members = models.ManyToManyField(User, related_name="user_groups", verbose_name="اعضا")
+    members = models.ManyToManyField(User, related_name="user_groups", verbose_name="اعضا",
+                                     blank=True)  # تغییر: اختیاری شد
 
     def __str__(self):
         return self.name
@@ -16,19 +20,18 @@ class UserGroup(models.Model):
         verbose_name_plural = "گروه‌های کاربران"
 
 
-# 2. مدل پروژه (Project / Category)
 class Project(models.Model):
-    STATUS_CHOICES = (
-        ('pending', 'در حال انجام'),
-        ('completed', 'انجام شده'),
-        ('finished', 'تمام شده'),
-    )
+    STATUS_CHOICES = (('pending', 'در حال انجام'), ('completed', 'انجام شده'), ('finished', 'تمام شده'))
     name = models.CharField(max_length=200, verbose_name="نام پروژه")
-    description = RichTextUploadingField(blank=True, verbose_name="توضیحات پروژه") # CKEditor
-    deadline = models.DateField(verbose_name="مهلت انجام پروژه", null=False, blank=False)
+
+    description = RichTextUploadingField(blank=True, verbose_name="توضیحات پروژه")
+    deadline = models.DateField(verbose_name="مهلت انجام پروژه", null=True, blank=True)  # تغییر: اختیاری شد
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="وضعیت")
-    assigned_to_groups = models.ManyToManyField(UserGroup, blank=True, related_name="projects", verbose_name="اختصاص به گروه‌ها")
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="created_projects", verbose_name="ایجاد کننده")
+    assigned_to_groups = models.ManyToManyField(UserGroup, blank=True, related_name="projects",
+                                                verbose_name="اختصاص به گروه‌ها")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="created_projects", verbose_name="ایجاد کننده")  # تغییر: اختیاری شد
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="تاریخ بروزرسانی")
 
@@ -40,30 +43,27 @@ class Project(models.Model):
         verbose_name_plural = "پروژه‌ها"
 
 
-# 3. مدل وظیفه (Task)
 class Task(models.Model):
-    STATUS_CHOICES = (
-        ('pending', 'در انتظار'),
-        ('in_progress', 'در حال انجام'),
-        ('needs_review', 'نیاز به بررسی'),
-        ('approved', 'تایید شده'),
-        ('rejected', 'رد شده'),
-        ('completed', 'تکمیل شده'),
-    )
+    STATUS_CHOICES = (('pending', 'در انتظار'), ('in_progress', 'در حال انجام'), ('needs_review', 'نیاز به بررسی'),
+                      ('approved', 'تایید شده'), ('rejected', 'رد شده'), ('completed', 'تکمیل شده'))
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="tasks", verbose_name="پروژه")
-    parent_task = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name="subtasks", verbose_name="وظیفه والد")
+    parent_task = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name="subtasks",
+                                    verbose_name="وظیفه والد")
     title = models.CharField(max_length=255, verbose_name="عنوان وظیفه")
-    description = RichTextUploadingField(blank=True, verbose_name="توضیحات وظیفه") # CKEditor
-    assigned_to = models.ManyToManyField(User, related_name="assigned_tasks", verbose_name="اختصاص یافته به")
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="created_tasks", verbose_name="ایجاد کننده")
+    description = RichTextUploadingField(blank=True, verbose_name="توضیحات وظیفه")
+    assigned_to = models.ManyToManyField(User, related_name="assigned_tasks", verbose_name="اختصاص یافته به",
+                                         blank=True)  # تغییر: اختیاری شد
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="created_tasks",
+                                   verbose_name="ایجاد کننده")  # تغییر: اختیاری شد
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="تاریخ بروزرسانی")
     deadline = models.DateField(null=True, blank=True, verbose_name="مهلت انجام وظیفه")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="وضعیت")
     is_approved = models.BooleanField(default=False, verbose_name="تایید شده توسط مدیر")
-    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="approved_tasks", verbose_name="تایید کننده")
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name="approved_tasks", verbose_name="تایید کننده")
     approval_date = models.DateTimeField(null=True, blank=True, verbose_name="تاریخ تایید/رد")
-    rejection_reason = models.TextField(blank=True, verbose_name="دلیل رد شدن") # اینجا CKEditor لازم نیست
+    rejection_reason = models.TextField(blank=True, verbose_name="دلیل رد شدن")
 
     def __str__(self):
         return self.title
@@ -73,20 +73,15 @@ class Task(models.Model):
         verbose_name_plural = "وظایف"
 
 
-# 4. مدل گزارش کار (WorkReport)
-# your_app_name/models.py (فقط بخش تغییرات یا مدل جدید)
-
-# ... (مدل‌های قبلی شما، از جمله WorkReport، بدون تغییر در فیلدهای start_time و end_time)
-
-# 4. مدل گزارش کار (WorkReport)
 class WorkReport(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="work_reports", verbose_name="وظیفه")
-    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reported_work", verbose_name="گزارش دهنده")
+    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reported_work",
+                                 verbose_name="گزارش دهنده")
     report_date = models.DateField(verbose_name="تاریخ گزارش")
-    description = RichTextUploadingField(verbose_name="شرح فعالیت") # CKEditor
-    # start_time و end_time از اینجا حذف می‌شوند تا توسط WorkTimeSpan مدیریت شوند
+    description = RichTextUploadingField(verbose_name="شرح فعالیت", blank=True)  # تغییر: اختیاری شد
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ و زمان ثبت گزارش")
 
+    # ... بقیه متدها و کلاس Meta ...
     def __str__(self):
         return f"گزارش کار {self.reporter.username} در {self.report_date} برای {self.task.title}"
 
@@ -96,20 +91,26 @@ class WorkReport(models.Model):
         ordering = ['-report_date', '-created_at']
 
 
-# یک مدل جدید برای نگهداری بازه های زمانی متعدد
 class WorkTimeSpan(models.Model):
-    work_report = models.ForeignKey(WorkReport, on_delete=models.CASCADE, related_name="time_spans", verbose_name="گزارش کار")
+    work_report = models.ForeignKey(WorkReport, on_delete=models.CASCADE, related_name="time_spans",
+                                    verbose_name="گزارش کار")
     start_time = models.TimeField(verbose_name="ساعت شروع")
     end_time = models.TimeField(verbose_name="ساعت پایان")
-    notes = models.TextField(blank=True, verbose_name="توضیحات بازه") # توضیحات اختیاری برای این بازه خاص
+    notes = models.TextField(blank=True, verbose_name="توضیحات بازه")
 
+    # ... بقیه متدها و کلاس Meta ...
     def __str__(self):
         return f"{self.start_time} تا {self.end_time} برای گزارش {self.work_report.id}"
 
     class Meta:
         verbose_name = "بازه زمانی کار"
         verbose_name_plural = "بازه‌های زمانی کار"
-        ordering = ['start_time'] # مرتب سازی بازه ها بر اساس ساعت شروع
+        ordering = ['start_time']
+
+
+# ... (برای اختصار، بقیه مدل‌ها نمایش داده نشده‌اند اما می‌توانید همین الگو را برای فیلدهای آن‌ها نیز به کار ببرید)
+# مثلا برای GithubCommitLink.description یا Expense.description که از قبل blank=True داشتند.
+# 1. مدل گروه کاربران (UserGroup)
 
 
 # 5. مدل فایل پیوست (WorkReportAttachment)
