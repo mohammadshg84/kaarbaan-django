@@ -178,4 +178,4 @@ CKEDITOR_CONFIGS = {
 }
 
 LOGIN_REDIRECT_URL = '/dashboard/' # آدرسی که پس از لاگین موفق کاربر به آن هدایت می شود
-LOGIN_URL = '/app/login/'     # آدرس صفحه لاگین شما
+LOGIN_URL = '/login/'     # آدرس صفحه لاگین شما
