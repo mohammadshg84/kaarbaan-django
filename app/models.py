@@ -25,7 +25,7 @@ class Project(models.Model):
     )
     name = models.CharField(max_length=200, verbose_name="نام پروژه")
     description = RichTextUploadingField(blank=True, verbose_name="توضیحات پروژه") # CKEditor
-    deadline = models.DateField(verbose_name="مهلت انجام پروژه")
+    deadline = models.DateField(verbose_name="مهلت انجام پروژه", null=False, blank=False)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="وضعیت")
     assigned_to_groups = models.ManyToManyField(UserGroup, blank=True, related_name="projects", verbose_name="اختصاص به گروه‌ها")
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="created_projects", verbose_name="ایجاد کننده")
